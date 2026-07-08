@@ -21,7 +21,7 @@ A Jupyter Notebook demonstrating the complete workflow for generating urban and 
 - A regional climate model land-representation dataset.
 - A city or urban boundary polygon.
 
-_Urban fraction, land-sea fraction, and orography datasets are not distributed with this repository. Examples shown are for the RCMs used as part of the NUKLEUS simulations (Sieck et al., 2026; Beier et al., 2025)._
+_Urban fraction, land-sea fraction, and orography datasets are not distributed with this repository. Examples shown are for the RCMs used as part of the NUKLEUS simulations (Sieck et al., 2026). Dataset available upon request._
 
 _Urban boundary datasets are not distributed with this repository and must be downloaded separately from the sources listed below._
 
@@ -62,26 +62,29 @@ The data is distributed via https://gisco-services.ec.europa.eu/distribution/v2/
 
 _urban_rural_mask_example.ipynb_ uses 
 
-**/ref-urau-2024-100k.shp/URAU_RG_100K_2024_4326.shp** 
+**ref-urau-2024-100k.shp/**
+
+**└── URAU_RG_100K_2024_4326.shp** 
 
 downloaded from https://gisco-services.ec.europa.eu/distribution/v2/urau/urau-2024-files.html
 
 ### **Global Human Settlement - Urban Centre Database (GHS-UCDB)**
 
-Provides globally consistent "urban centre" polygons developed by the European Commission, supporting global monitoring of policy frameworks and providing data for urban studies. GHS-UCDB inputs data from the GHS Layer (GHSL) and follows the “degree of urbanisation” (DEGURBA) methodology.
+Provides globally consistent "urban centre" polygons developed by the European Commission, supporting global monitoring of policy frameworks and providing data for urban studies. GHS-UCDB inputs data from the GHS Layer (GHSL) and follows the “degree of urbanisation” (DEGURBA) methodology (Mari Rivero et al., 2026).
 
 The data is distributed via https://human-settlement.emergency.copernicus.eu/ghs_stat_ucdb2015mt_r2019a.php
 
 _urban_rural_mask_example.ipynb_ uses 
 
-**/GHS_STAT_UCDB2015MT_GLOBE_R2019A/GHS_STAT_UCDB2015MT_GLOBE_R2019A_V1_2.gpkg**
+**GHS_STAT_UCDB2015MT_GLOBE_R2019A/**
+
+**└── GHS_STAT_UCDB2015MT_GLOBE_R2019A_V1_2.gpkg**
+
 
 downloaded from https://human-settlement.emergency.copernicus.eu/ghs_stat_ucdb2015mt_r2019a.php
 
 
 ## References
-
-- Beier, C., Ziegler, K., Paeth, H. et al. (2025). NUKLEUS – A first convection‑permitting multi‑model ensemble for Germany: Assessment of future changes in temperature and precipitation extremes. Manuscript submitted for publication in Journal of Climate.
 
 - Diez-Sierra, J., Quintana, Y., Langendijk, G.S. et al. (2025). A global CORDEX-based dataset delineating urban areas and their surroundings to assess climate change in megacities. Scientific Data, 12, 1961. https://doi.org/10.1038/s41597-025-06257-1
   
