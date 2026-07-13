@@ -18,4 +18,6 @@ version: 1.0.0
 
 date-released: 2026-07-13
 
+doi: 10.5281/zenodo.21341935
+
 repository-code: "https://github.com/riddhimap/urmask"
