@@ -104,6 +104,8 @@ Puri, R., Teichmann, C., & Rechid, D. (2026). urmask: Urban and Rural Area Class
 
 - Diez-Sierra, J., Quintana, Y., Langendijk, G.S. et al. (2025). A global CORDEX-based dataset delineating urban areas and their surroundings to assess climate change in megacities. Scientific Data, 12, 1961. https://doi.org/10.1038/s41597-025-06257-1
   
+- Diez-Sierra, J., Quintana, Y., Langendijk, G.S. et al. (2025). URCLIMASK: A Python Package for Delineating Urban Areas and Their Surrounding Reference Rural Regions from Regional Climate Models (RCMs) (Version v1.1.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17257445
+  
 - European Commission. Eurostat. (2025). Urban Audit database [Dataset]. https://ec.europa.eu/eurostat/web/regions-and-cities
 
 - Marí Rivero, I., Melchiorri, M., Florio, P. et al. (2026). GHS-UCDB R2024A: GHS Urban Centre Database 2025 [Dataset]. European Commission, Joint Research Centre. http://data.europa.eu/89h/1a338be6-7eaf-480c-9664-3a8ade88cbcd
