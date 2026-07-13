@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+title: urmask
+message: "If you use this software, please cite it."
+authors:
+  - family-names: Puri
+    given-names: Riddhima
+version: 1.0.0
+date-released: 2026-07-13
