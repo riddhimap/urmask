@@ -4,20 +4,22 @@ This repository contains the _**urmask**_ Python package, designed to derive urb
 
 _urmask_ builds upon the methodology introduced in URCLIMASK (Diez-Sierra et al., 2025) and extends it for convection-permitting regional climate models (CPRCMs) operating at kilometre-scale resolutions.
 
-URCLIMASK was developed primarily for coarse-resolution regional climate models (12.5–25 km), where cities are represented by only a few grid cells. At CPRCM resolutions (~3 km), urban areas become much more spatially complex, and neighboring towns, suburbs, and cities are often explicitly resolved.
+URCLIMASK was developed primarily for coarse-resolution regional climate models (12.5–25 km), where cities are represented by only a few grid cells. At CPRCM resolutions (~3 km), urban areas become much more spatially complex, with urban cores, suburbs, satellite towns, and neighboring cities often being explicitly resolved. Thus, at this scale, nearby urban areas can appear connected, making it difficult to identify independent cities with a simple single-threshold approach.
 
 To address these challenges, _urmask_ introduces:
 
-- Multi-threshold urban-density analysis to separate connected urban areas.
-- Boundary-informed urban attribution to distinguish the target city from neighboring cities.
-- Automated parameter selection and convergence criteria that reduce parameter tuning.
-- Unique grid-cell assignment, ensuring a grid cell cannot belong to multiple cities, which enables inter-city and regional comparison.
+- Multi-threshold urban-density analysis to improve the separation of connected urban areas.
+- Boundary-informed urban area extraction to distinguish the target city from neighboring cities.
+- Automated parameter selection and convergence criteria that reduce manual parameter tuning.
+- Unique grid-cell assignment, ensuring that a grid cell cannot belong to multiple cities and enabling robust inter-city and regional comparisons.
 
-Unlike a simple administrative clipping approach, urmask retains the land-based approach of URCLIMASK by using the model's urban fraction, land-sea fraction, and orography while incorporating administrative boundaries as additional spatial context.
+Unlike a simple administrative clipping approach, _urmask_ retains the land-based approach of URCLIMASK by using the model's urban fraction, land-sea fraction, and orography while incorporating administrative boundaries as additional spatial context. In doing so, _urmask_ extends the original methodology for the greater spatial complexity of kilometre-scale climate simulations rather than simply re-implementing the URCLIMASK workflow.
 
-This supports climate-service applications and can be adapted to different use cases. For example, users may define urban areas using City (C) or Functional Urban Areas (F) boundaries from the Urban Audit dataset (URAU) (European Commission, Eurostat, 2025). This approach enables the generation of administratively meaningful urban and rural masks that remain consistent with the land-cover representation of individual climate models.
+The framework supports climate-service applications and can be adapted to different use cases. For example, users may define urban areas using City (C) or Functional Urban Areas (F) boundaries from the Urban Audit dataset (URAU) (European Commission, Eurostat, 2025). This approach enables the generation of administratively meaningful urban and rural masks that remain consistent with the land-cover representation of individual climate models.
 
-Thus, the result of _urmask.py_ is a transferable workflow for generating urban and rural masks, which is better suited to high-resolution climate simulations and inter-city climate analyses.
+A key advantage of _urmask_ is that many parameters can be derived dynamically from the characteristics of the target city and the underlying model data. This minimizes the need for city-specific parameter tuning, allowing the methodology to be applied consistently across cities of different sizes and morphologies while improving robustness, transferability, and comparability.
+
+The result is thus a transferable workflow for generating urban and rural masks that is particularly suited to high-resolution climate simulations, Urban Heat Island studies, climate service applications, and inter-city climate analyses.
 
 ## Repository Contents
 
