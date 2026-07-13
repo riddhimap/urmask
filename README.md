@@ -13,7 +13,7 @@ To address these challenges, _urmask_ introduces:
 - Automated parameter selection and convergence criteria that reduce manual parameter tuning.
 - Unique grid-cell assignment, ensuring that a grid cell cannot belong to multiple cities and enabling robust inter-city and regional comparisons.
 
-Unlike a simple administrative clipping approach, _urmask_ retains the land-based approach of URCLIMASK by using the model's urban fraction, land-sea fraction, and orography while incorporating administrative boundaries as additional spatial context. In doing so, _urmask_ extends the original methodology for the greater spatial complexity of kilometre-scale climate simulations rather than simply re-implementing the URCLIMASK workflow.
+Unlike a simple administrative clipping approach, _urmask_ retains the land-based approach of URCLIMASK by using the model's urban fraction, land-sea fraction, and orography while incorporating administrative boundaries as additional spatial context. In doing so, _urmask_ extends the original methodology for the greater spatial complexity of kilometre-scale climate simulations.
 
 The framework supports climate-service applications and can be adapted to different use cases. For example, users may define urban areas using City (C) or Functional Urban Areas (F) boundaries from the Urban Audit dataset (URAU) (European Commission, Eurostat, 2025). This approach enables the generation of administratively meaningful urban and rural masks that remain consistent with the land-cover representation of individual climate models.
 
@@ -91,6 +91,13 @@ _urban_rural_mask_example.ipynb_ uses
 
 
 downloaded from https://human-settlement.emergency.copernicus.eu/ghs_stat_ucdb2015mt_r2019a.php
+
+
+## Citation
+
+If you use urmask, please cite:
+
+Puri, R., Teichmann, C., & Rechid, D. (2026). urmask: Urban and Rural Area Classification for High-Resolution Climate Model Data. Zenodo. https://doi.org/10.5281/zenodo.21341935
 
 
 ## References
