@@ -2,9 +2,9 @@
 Created by:
 Riddhima Puri
 
-This module contains the UrbanRuralSelection class providing methods for selecting urban and optionally, rural areas for high-resolution climate data.
+This module contains the UrbanRuralSelection class, providing methods for selecting urban and, optionally, rural areas for high-resolution climate data.
 
-It builds on the methodology developed by Diez-Sierra et al. (2025) in the URCLIMASK package, with modified logic 
+It builds on the methodology developed by Diez-Sierra et al. (2025) in the URCLIMASK package (distributed under the Apache License 2.0), with modified logic 
 for selecting urban and rural areas based on urban fraction, land fraction, and orography data.
 
 It requires the following input datasets:
@@ -12,6 +12,16 @@ It requires the following input datasets:
 - Urban fraction (uf) dataset: Contains the urban fraction values for each grid cell.
 - Land fraction (lf) dataset: Contains the land fraction values for each grid cell.
 - Orography (orog) dataset: Contains the orography values for each grid cell (optional, for rural mask creation).
+
+References:
+Diez-Sierra, J., Quintana, Y., Langendijk, G.S. et al. (2025).
+A global CORDEX-based dataset delineating urban areas and their surroundings to assess climate change in megacities.
+Scientific Data, 12, 1961.
+https://doi.org/10.1038/s41597-025-06257-1
+
+Diez-Sierra, J., Quintana, Y., Langendijk, G.S. et al. (2025). 
+URCLIMASK: A Python Package for Delineating Urban Areas and Their Surrounding Reference Rural Regions from Regional Climate Models (RCMs) (Version v1.1.0) [Computer software]. 
+Zenodo. https://doi.org/10.5281/zenodo.17257445
 """
 
 import matplotlib
