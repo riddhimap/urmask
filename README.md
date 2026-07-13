@@ -1,16 +1,23 @@
-# Urban Area Classification for Climate Model Data
+# urmask: Urban and Rural Area Classification for High-Resolution Climate Model Data
 
-This repository contains the _**urmask**_ Python package, designed to derive urban and, optionally, rural masks from climate model data. Building on the _urclimask_ Python package (Diez-Sierra et al., 2025), this _**urmask**_ package extends the methodological framework for identifying urban and rural areas to convection-permitting regional climate models (CPRCMs).
+This repository contains the _**urmask**_ Python package, designed to derive urban and, optionally, rural masks from climate model data. 
 
-_**urmask**_ uses **each model's individual land representation** to define urban and rural areas. This ensures that the resulting masks are consistent with the model's underlying surface characteristics.
+_urmask_ builds upon the methodology introduced in URCLIMASK (Diez-Sierra et al., 2025) and extends it for convection-permitting regional climate models (CPRCMs) operating at kilometre-scale resolutions.
 
-The methodology uses the following model variables:
+URCLIMASK was developed primarily for coarse-resolution regional climate models (12.5–25 km), where cities are represented by only a few grid cells. At CPRCM resolutions (~3 km), urban areas become much more spatially complex, and neighboring towns, suburbs, and cities are often explicitly resolved.
 
-- Urban fraction – proportion of urbanized area within each grid cell.
-- Land-sea mask – percentage of land area within each grid cell.
-- Orography – surface elevation used to improve rural area selection.
+To address these challenges, _urmask_ introduces:
 
-To support climate-service applications, the methodology is **additionally constrained by administrative city or urban boundaries** that can be adapted to different use cases. For example, users may define urban areas using City (C) or Functional Urban Areas (F) boundaries from the Urban Audit  dataset (URAU) (European Commission, Eurostat, 2025). This approach enables the generation of administratively meaningful urban and rural masks that remain consistent with the land-cover representation of individual climate models.
+- Multi-threshold urban-density analysis to separate connected urban areas.
+- Boundary-informed urban attribution to distinguish the target city from neighboring cities.
+- Automated parameter selection and convergence criteria that reduce parameter tuning.
+- Unique grid-cell assignment, ensuring a grid cell cannot belong to multiple cities, which enables inter-city and regional comparison.
+
+Unlike a simple administrative clipping approach, urmask retains the land-based approach of URCLIMASK by using the model's urban fraction, land-sea fraction, and orography while incorporating administrative boundaries as additional spatial context.
+
+This supports climate-service applications and can be adapted to different use cases. For example, users may define urban areas using City (C) or Functional Urban Areas (F) boundaries from the Urban Audit dataset (URAU) (European Commission, Eurostat, 2025). This approach enables the generation of administratively meaningful urban and rural masks that remain consistent with the land-cover representation of individual climate models.
+
+Thus, the result of _urmask.py_ is a transferable workflow for generating urban and rural masks, which is better suited to high-resolution climate simulations and inter-city climate analyses.
 
 ## Repository Contents
 
@@ -41,7 +48,7 @@ Contains the UrbanRuralSelection class, which provides functionality to:
 Utility functions supporting data preprocessing, spatial operations, and visualization.
 
 
-### **environment.txt**
+### **urmask/environment.txt**
 
 Lists the main Python package dependencies and version requirements needed to reproduce the computational environment used by this repository.
 
