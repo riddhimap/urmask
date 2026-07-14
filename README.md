@@ -61,7 +61,7 @@ To generate urban and rural masks, urmask requires the following input datasets:
 
 ### Urban Boundary Datasets
 
-The package can be used with different urban or administrative boundary datasets, including:
+The package can be used with different urban or administrative boundary datasets, including, but not limited to:
 
 - **Urban Audit dataset (URAU)**
 
