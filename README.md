@@ -15,25 +15,18 @@ To address these challenges, _urmask_ introduces:
 
 Unlike a simple administrative clipping approach, _urmask_ retains the land-based approach of URCLIMASK by using the model's urban fraction, land-sea fraction, and orography while incorporating administrative boundaries as additional spatial context. In doing so, _urmask_ extends the original methodology for the greater spatial complexity of kilometre-scale climate simulations.
 
-The framework supports climate-service applications and can be adapted to different use cases. For example, users may define urban areas using City (C) or Functional Urban Areas (F) boundaries from the Urban Audit dataset (URAU) (European Commission, Eurostat, 2025). This approach enables the generation of administratively meaningful urban and rural masks that remain consistent with the land-cover representation of individual climate models.
+The framework supports climate-service applications and can be adapted to different use cases. For example, users may define urban areas using City or Functional Urban Areas boundaries from the Urban Audit dataset (URAU) (European Commission, Eurostat, 2025). This approach enables the generation of administratively meaningful urban and rural masks that remain consistent with the land-cover representation of individual climate models.
 
 A key advantage of _urmask_ is that many parameters can be derived dynamically from the characteristics of the target city and the underlying model data. This minimizes the need for city-specific parameter tuning, allowing the methodology to be applied consistently across cities of different sizes and morphologies while improving robustness, transferability, and comparability.
 
 The result is thus a transferable workflow for generating urban and rural masks that is particularly suited to high-resolution climate simulations, Urban Heat Island studies, climate service applications, and inter-city climate analyses.
 
+
 ## Repository Contents
 
 ### **urban_rural_mask_example.ipynb**
 
-A Jupyter Notebook demonstrating the complete workflow for generating urban and rural masks using:
-
-- A regional climate model land-representation dataset.
-- A city or urban boundary polygon.
-
-_Urban fraction, land-sea fraction, and orography datasets are not distributed with this repository. Examples shown are for the RCMs used as part of the NUKLEUS simulations (Sieck et al., 2026). Dataset available upon request._
-
-_Urban boundary datasets are not distributed with this repository and must be downloaded separately from the sources listed below._
-
+A Jupyter Notebook demonstrating the complete workflow for generating urban and rural masks.
 
 ### **urmask/urmask.py**
 
@@ -44,11 +37,9 @@ Contains the UrbanRuralSelection class, which provides functionality to:
 - Generate rural masks based on land-cover and elevation criteria.
 - Visualize the resulting masks.
 
-
 ### **urmask/utils.py**
 
 Utility functions supporting data preprocessing, spatial operations, and visualization.
-
 
 ### **urmask/environment.txt**
 
@@ -59,39 +50,49 @@ Install all dependencies using:
 pip install -r environment.txt
 
 
-## Urban Boundary Datasets
+## Required Input Data
+To generate urban and rural masks, urmask requires the following input datasets:
 
-The package can be used with different administrative boundary datasets, including:
+### Surface and land-representation data for the regional climate model
 
-### **Urban Audit dataset (URAU)**
+- Urban fraction: Fraction of each grid cell classified as urban.
+- Land-sea mask:  Percentage of each grid cell covered by land.
+- Orography (optional but recommended for rural masks): Surface elevation used to improve rural area selection.
 
-Provides city (C) and functional urban area (F) polygons as defined by the EC-OECD city definition. This dataset is used for the Eurostat Urban Audit data collection European Commission, Eurostat, 2025). Used here as it is suitable for climate-service applications that require policy-relevant spatial definitions at the EU, national, and local government scales.
+### Urban Boundary Datasets
 
-The data is distributed via https://gisco-services.ec.europa.eu/distribution/v2/urau/
+The package can be used with different urban or administrative boundary datasets, including:
 
-_urban_rural_mask_example.ipynb_ uses 
+- **Urban Audit dataset (URAU)**
 
-**ref-urau-2024-100k.shp/**
+  Provides city polygons as defined by the EC-OECD city definition. This dataset is used for the Eurostat Urban Audit data collection European Commission, Eurostat, 2025). Used here as it is suitable for climate-service applications that require policy-relevant spatial definitions at the EU, national, and local government scales.
+  
+  The data is distributed via https://gisco-services.ec.europa.eu/distribution/v2/urau/
+  
+  _urban_rural_mask_example.ipynb_ uses 
+  
+  **ref-urau-2024-100k.shp/**
+  
+  **└── URAU_RG_100K_2024_4326_CITIES.shp/URAU_RG_100K_2024_4326_CITIES.shp** 
+  
+  downloaded from https://gisco-services.ec.europa.eu/distribution/v2/urau/urau-2024-files.html
 
-**└── URAU_RG_100K_2024_4326.shp** 
+- **Global Human Settlement - Urban Centre Database (GHS-UCDB)**
 
-downloaded from https://gisco-services.ec.europa.eu/distribution/v2/urau/urau-2024-files.html
+  Provides globally consistent "urban centre" polygons developed by the European Commission, supporting global monitoring of policy frameworks and providing data for urban studies. GHS-UCDB inputs data from the GHS Layer (GHSL) and follows the “degree of urbanisation” (DEGURBA) methodology (Mari Rivero et al., 2026).
+  
+  The data is distributed via https://human-settlement.emergency.copernicus.eu/ghs_stat_ucdb2015mt_r2019a.php
+  
+  _urban_rural_mask_example.ipynb_ uses 
+  
+  **GHS_STAT_UCDB2015MT_GLOBE_R2019A/**
+  
+  **└── GHS_STAT_UCDB2015MT_GLOBE_R2019A_V1_2.gpkg**
+  
+  
+  downloaded from https://human-settlement.emergency.copernicus.eu/ghs_stat_ucdb2015mt_r2019a.php
 
-### **Global Human Settlement - Urban Centre Database (GHS-UCDB)**
-
-Provides globally consistent "urban centre" polygons developed by the European Commission, supporting global monitoring of policy frameworks and providing data for urban studies. GHS-UCDB inputs data from the GHS Layer (GHSL) and follows the “degree of urbanisation” (DEGURBA) methodology (Mari Rivero et al., 2026).
-
-The data is distributed via https://human-settlement.emergency.copernicus.eu/ghs_stat_ucdb2015mt_r2019a.php
-
-_urban_rural_mask_example.ipynb_ uses 
-
-**GHS_STAT_UCDB2015MT_GLOBE_R2019A/**
-
-**└── GHS_STAT_UCDB2015MT_GLOBE_R2019A_V1_2.gpkg**
-
-
-downloaded from https://human-settlement.emergency.copernicus.eu/ghs_stat_ucdb2015mt_r2019a.php
-
+_Note: Urban fraction, land-sea fraction, and orography datasets are not distributed with this repository. The examples shown are for the RCMs used in the NUKLEUS simulations (Sieck et al., 2026). Dataset available upon request. Urban boundary datasets are also not distributed with this repository and must be downloaded separately from the sources listed above._
 
 ## Citation
 
