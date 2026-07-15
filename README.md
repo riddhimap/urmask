@@ -121,3 +121,9 @@ Puri, R., Teichmann, C., & Rechid, D. (2026). urmask: Urban and Rural Area Class
 
 - Sieck, K., Pinto, J. G., Geyer, B. et al. (2026). NUKLEUS – A First Kilometre Scale Multi-model Climate Ensemble for Germany: Evaluation. EGUsphere [preprint]. https://doi.org/10.5194/egusphere-2026-1024
 
+
+License:
+This project modifies and extends software originally released under the Apache License 2.0.
+This software is distributed under the Apache License 2.0.
+
+
