@@ -83,14 +83,22 @@ The package can be used with different urban or administrative boundary datasets
   
   The data is distributed via https://human-settlement.emergency.copernicus.eu/ghs_stat_ucdb2015mt_r2019a.php
   
-  _urban_rural_mask_example.ipynb_ uses 
+  _urban_rural_mask_example.ipynb_ uses
+  
+  **GHS_UCDB_REGION_EUROPE_R2024A_V1_1/**
+  
+  **└── GHS_UCDB_REGION_EUROPE_R2024A.gpkg**
+
+  downloaded from https://human-settlement.emergency.copernicus.eu/ghs_ucdb_2024.php
+
+  or
   
   **GHS_STAT_UCDB2015MT_GLOBE_R2019A/**
   
   **└── GHS_STAT_UCDB2015MT_GLOBE_R2019A_V1_2.gpkg**
   
-  
   downloaded from https://human-settlement.emergency.copernicus.eu/ghs_stat_ucdb2015mt_r2019a.php
+  
 
 _Note: Urban fraction, land-sea fraction, and orography datasets are not distributed with this repository. The examples shown are for the RCMs used in the NUKLEUS simulations (Sieck et al., 2026). Dataset available upon request. Urban boundary datasets are also not distributed with this repository and must be downloaded separately from the sources listed above._
 
