@@ -1,3 +1,5 @@
+https://doi.org/10.5281/zenodo.21341935
+
 # urmask: Urban and Rural Area Classification for High-Resolution Climate Model Data
 
 This repository contains the _**urmask**_ Python package, designed to derive urban and, optionally, rural masks from climate model data. 
