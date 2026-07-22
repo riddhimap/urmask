@@ -24,6 +24,8 @@ URCLIMASK: A Python Package for Delineating Urban Areas and Their Surrounding Re
 Zenodo. https://doi.org/10.5281/zenodo.17257445
 """
 
+import json
+
 import matplotlib
 import numpy as np
 import xarray as xr
@@ -83,7 +85,7 @@ class UrbanRuralSelection:
             Name of the domain or region being analyzed. Optional metadata.
         urban_threshold : float | None      
             Threshold of urban fraction in a grid cell above which it is considered urban. Default is >0.1.
-            Must be same as low of threshold levels under define_urban_mask.
+            Must be same as low of threshold levels under create_urban_mask.
         rural_threshold : float | None
             Threshold of urban fraction in a grid cell below which it is considered rural. Default is <=0.1.
         landsea_threshold : float
@@ -290,6 +292,8 @@ class UrbanRuralSelection:
                                ds_orog: xr.DataArray | None = None, # required for creating rural mask
                                thresholds_fraction: list[float] = None, # low to high tiers
                                debug_select_labels: bool = False,
+                               orog_method_1: bool = True,
+                               orog_method_2: bool = False,
                                ) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray | None, list[np.ndarray], list[np.ndarray]]:
         
         """
@@ -306,14 +310,8 @@ class UrbanRuralSelection:
         thresholds_fraction : [low to high] list of floats
             Threshold levels to define low/medium/high urban fraction tiers.
             If not provided, thresholds are dynamically computed based on the local distribution of urban fraction values above the given urban threshold.
-        crop_analysis_domain : bool, optional
-            Crop analysis domain of ds_uf for defining urban mask.
-            If True, crop ds_uf around the bounding box of the city polygon before processing to avoid far-away connections.
-            If False, use the full domain of ds_uf.
-            If None, the function will decide automatically based on the data.
-        crop_analysis_domain_distance_from_polygon_km : float
-            Distance in kilometers to crop analysis domain around the bounding box of the city polygon for defining urban mask.
-            Default is 2x the given resolution of the dataset (in km) or 2 grid cells from the city polygon.
+        debug_select_labels : bool
+            If True, debug information will be printed during the label selection process.
 
         Returns
         -------
@@ -332,6 +330,9 @@ class UrbanRuralSelection:
         # Extract latitude, longitude, and urban fraction values
         lat = ds_uf['lat'].values
         lon = ds_uf['lon'].values
+
+        # Standardize UF to [0, 1] and LF to [0, 100] before processing
+        ds_uf, ds_lf = self._standardize_fraction_inputs(ds_uf=ds_uf, ds_lf=ds_lf)
 
         # Step 1: Compute dynamic thresholds if not provided
         if thresholds_fraction is None:
@@ -367,6 +368,8 @@ class UrbanRuralSelection:
         # Combine urban mask with land-sea masks
         urban_mask = urban_mask * landsea_mask
 
+        orog_mask = None
+
         # Optional: Create orography mask if orography data is provided
         if ds_orog is not None:
             """ Modified from: 
@@ -387,12 +390,9 @@ class UrbanRuralSelection:
             orog_mask2 = ds_orog > lower_thresh
             orog_mask = orog_mask1 & orog_mask2
                 
-            self.urban_elev_min = urban_elev_min 
-            self.urban_elev_max = urban_elev_max 
+            self.urban_elev_min_threshold = lower_thresh 
+            self.urban_elev_max_threshold = upper_thresh
 
-            
-        else:
-            orog_mask = None
 
         urban_mask = urban_mask.astype(int).where(urban_mask.astype(int) == 1, np.nan)
         # Return urban mask as xarray and add attributes
@@ -447,6 +447,9 @@ class UrbanRuralSelection:
             # Diez-Sierra et al. (2025). URCLIMASK: A Python Package for Delineating Urban Areas and Their Surrounding Reference Rural Regions from Regional Climate Models (RCMs) (v1.1.0). Zenodo. https://doi.org/10.5281/zenodo.17257445
 
             # Step 1: Initialize variables
+
+            # Standardize UF to [0, 1] and LF to [0, 100] before processing
+            ds_uf, _ = self._standardize_fraction_inputs(ds_uf=ds_uf)
             
             # Define urban seed for rural growth
             if urban_mask.isnull().any():
@@ -468,7 +471,18 @@ class UrbanRuralSelection:
                                 [1, 1, 1],
                                 [1, 1, 1]])
 
-            # Step 2: Define seed for rural growth: urban core + transition bridge + polygon mask (if rural_area_inside_city_polygon is False)
+            # Step 2: Define eligibility for rural growth
+
+            # They must be below the urban fraction threshold and satisfy land mask and if provided, orography mask. 
+            # If orography mask is not provided, only land mask is used.
+            if orog_mask is None:
+                valid_land = landsea_mask.astype(bool)
+            else:
+                valid_land = orog_mask.astype(bool) & landsea_mask.astype(bool)
+
+            eligible = (ds_uf <= self.rural_th) & valid_land
+
+            # Step 3: Define seed for rural growth: urban core + transition bridge + polygon mask (if rural_area_inside_city_polygon is False)
 
             # Optional: Enforce that selected rural cells are not inside the city polygon (exact polygon mask).
             self.rural_area_inside_city_polygon = rural_area_inside_city_polygon
@@ -483,7 +497,7 @@ class UrbanRuralSelection:
                     grid_dims = ds_uf['lat'].dims
                     grid_coords = {grid_dims[0]: ds_uf[grid_dims[0]], grid_dims[1]: ds_uf[grid_dims[1]]}
                 else:
-                    raise ValueError('Unsupported lat/lon dimensionality in define_rural_mask')
+                    raise ValueError('Unsupported lat/lon dimensionality in create_rural_mask')
                 lon_flat = lon2d.ravel()
                 lat_flat = lat2d.ravel()
                 inside = np.array([self.city_polygon.contains(Point(lo, la)) for lo, la in zip(lon_flat, lat_flat)])
@@ -496,7 +510,6 @@ class UrbanRuralSelection:
                 print("Rural selection constraint: cells intersecting city polygon are excluded.")
             else:
                 polygon_mask = xr.zeros_like(ds_uf, dtype=bool)
-            
 
             # Handle transition zone between urban and rural thresholds
             if self.urban_th > self.rural_th:
@@ -518,16 +531,6 @@ class UrbanRuralSelection:
             # Currently dilated data is initialized as the seed for growth
             dilated_data = seed_for_growth.astype(bool)
 
-            # Step 3: Define eligibility for rural growth
-
-            # They must be below the urban fraction threshold and satisfy land mask and if provided, orography mask. 
-            # If orography mask is not provided, only land mask is used.
-            if orog_mask is None:
-                valid_land = landsea_mask.astype(bool)
-            else:
-                valid_land = orog_mask.astype(bool) & landsea_mask.astype(bool)
-
-            eligible = (ds_uf <= self.rural_th) & valid_land
 
             # Step 4: Define convergence conditions to stop the growth of the rural mask
             self.rural_to_urban_ratio = rural_to_urban_ratio
@@ -619,6 +622,67 @@ class UrbanRuralSelection:
     
     # ---- Helper functions -----
 
+    def _standardize_fraction_inputs(
+        self,
+        *,
+        ds_uf: xr.DataArray | None = None,
+        ds_lf: xr.DataArray | None = None,
+    ) -> tuple[xr.DataArray | None, xr.DataArray | None]:
+        """
+        Ensure urban fraction is in [0, 1] and land fraction is in [0, 100].
+        Auto-converts when the data range indicates the wrong scale.
+
+        Parameters
+        ----------
+        ds_uf : xr.DataArray | None
+            Urban fraction data (expected 0–1 after standardization). Pass None to skip.
+        ds_lf : xr.DataArray | None
+            Land fraction data (expected 0–100 after standardization). Pass None to skip.
+
+        Returns
+        -------
+        ds_uf, ds_lf : xr.DataArray | None
+            Standardized copies of the inputs; None if not provided.
+        """
+
+        def _units_kind(da):
+            u = (da.attrs.get("units", "") or "").strip().lower()
+            if u in {"%", "percent", "percentage"}:
+                return "percent"
+            if u in {"fraction", "unitless", "dimensionless"}:
+                return "fraction"
+            return "unknown"
+
+        if ds_uf is not None:
+            uf_min = float(ds_uf.min(skipna=True).item())
+            uf_max = float(ds_uf.max(skipna=True).item())
+            if uf_min < 0 or uf_max > 100:
+                raise ValueError(f"Urban fraction out of physical bounds: min={uf_min}, max={uf_max}")
+
+            u_kind = _units_kind(ds_uf)
+            if (u_kind == "percent" and uf_max > 1.0) or (u_kind == "unknown" and uf_max > 1.0):
+                ds_uf = ds_uf / 100.0
+                print(f"Urban fraction units detected as percent. Converting to fraction by dividing by 100.")
+
+
+        if ds_lf is not None:
+            lf_min = float(ds_lf.min(skipna=True).item())
+            lf_max = float(ds_lf.max(skipna=True).item())
+            if lf_min < 0 or lf_max > 100:
+                raise ValueError(f"Land-sea fraction out of physical bounds: min={lf_min}, max={lf_max}")
+
+            l_kind = _units_kind(ds_lf)
+            if l_kind == "fraction":
+                ds_lf = ds_lf * 100.0
+                print(f"Land-sea fraction units detected as fraction. Converting to percent by multiplying by 100.")
+            elif l_kind == "unknown":
+                lf_p95 = float(ds_lf.quantile(0.95, skipna=True).item())
+                if lf_p95 <= 1.0:
+                    ds_lf = ds_lf * 100.0
+                    print(f"Land-sea fraction units detected as unknown but 95th percentile <= 1. Converting to percent by multiplying by 100.")
+
+        return ds_uf, ds_lf
+
     def _get_dynamic_thresholds(self, *, ds_uf: xr.DataArray):
         """
         Compute dynamic thresholds based on the local distribution of urban fraction values above the given urban threshold.
@@ -634,20 +698,48 @@ class UrbanRuralSelection:
             Threshold values corresponding to the given percentiles.
         """
         uf = ds_uf.values
+        # Exclude NaN values (e.g., sea or masked cells) before any percentile calculation
+        uf_valid = uf[np.isfinite(uf)]
 
-        # Find where the urban threshold sits in the local percentile distribution of the urban fraction values
-        base_percentile = np.mean(uf <= self.urban_th) * 100
+        if uf_valid.size == 0:
+            raise ValueError("No valid (non-NaN) urban fraction values found in ds_uf.")
 
-        # minimum thresholds including the base threshold
-        n_thresholds = 2
-        n_thresholds = max(n_thresholds, round((100 - base_percentile) / 10))  # around 10% increments in the remaining tail
+        # Find where the urban threshold sits in the local valid-cell percentile distribution of the urban fraction values
+        base_percentile = np.mean(uf_valid <= self.urban_th) * 100
+
+        # Guard against degenerate case where almost all cells are below the threshold
+        remaining_tail = 100.0 - base_percentile
+        if remaining_tail < 1.0:
+            print(f"Warning: Urban threshold {self.urban_th} is above the {base_percentile:.1f}th percentile. "
+                  "Very few cells exceed it; returning a single threshold.")
+            return [self.urban_th]
+
+        # # minimum thresholds including the base threshold
+        # n_thresholds = 2
+        # n_thresholds = max(n_thresholds, round((100 - base_percentile) / 10))  # around 10% increments in the remaining tail
+        # threshold_percentiles = np.linspace(base_percentile, 100.0, num=n_thresholds, endpoint=False)
+        # print(f"Base percentile for urban threshold {self.urban_th}: {base_percentile:.2f}%")
+        # print(f"Computed threshold percentiles: {threshold_percentiles}")
+        # # Compute the actual the actual threshold values corresponding to the computed percentiles corres
+        # thresholds = np.percentile(uf, threshold_percentiles)
+        # # Ensure the first threshold is the physical base threshold
+        # thresholds[0] = self.urban_th
+
+        # Compute number of tiers: at least 2, roughly one per 10% of the remaining tail
+        n_thresholds = max(2, round(remaining_tail / 10))
         threshold_percentiles = np.linspace(base_percentile, 100.0, num=n_thresholds, endpoint=False)
+
         print(f"Base percentile for urban threshold {self.urban_th}: {base_percentile:.2f}%")
         print(f"Computed threshold percentiles: {threshold_percentiles}")
-        # Compute the actual threshold values corresponding to the computed percentiles
-        thresholds = np.percentile(uf, threshold_percentiles)
-        # Ensure the first threshold is the physical base threshold
+
+        # Compute the actual threshold values from valid cells only corresponding to the computed percentiles
+        thresholds = np.nanpercentile(uf_valid, threshold_percentiles)
+
+        # Pin the first threshold to the physical base value (overrides percentile rounding)
         thresholds[0] = self.urban_th
+
+        # Remove duplicate thresholds that would produce empty tiers in _compute_threshold_masks
+        thresholds = np.unique(thresholds)
         
         return thresholds
     
@@ -980,11 +1072,38 @@ class UrbanRuralSelection:
         urmask : xarray.Dataset
             The same dataset with added attributes.
         """
+
+        urmask = urmask.copy()
+
+        # Helper: convert values to netCDF-safe attribute types
+        def _to_netcdf_attr_value(value):
+            # Keep plain Python scalars
+            if isinstance(value, (str, int, float)):
+                return value
+
+            # Convert bool to string for widest netCDF compatibility
+            if isinstance(value, bool):
+                return str(value)
+
+            # numpy scalar -> Python scalar
+            if isinstance(value, np.generic):
+                py_val = value.item()
+                return str(py_val) if isinstance(py_val, bool) else py_val
+
+            # Lists/tuples/ndarrays -> JSON string
+            if isinstance(value, (list, tuple, np.ndarray)):
+                if isinstance(value, np.ndarray):
+                    value = value.tolist()
+                return json.dumps(value)
+
+            # Fallback for unknown objects
+            return str(value)
+
         # Fixed dataset-level metadata
-        urmask.attrs["created_by"] = "UrbanSelection class in _urbanmask.py"
+        urmask.attrs["created_by"] = "UrbanRuralSelection class in urmask.py"
         urmask.attrs["description"] = (
             "Dataset containing urban mask for the specified city. "
-            "1 indicates urban cells, 0 indicates rural cells, and NaN indicates cells outside the area of interest."
+            "Mask values follow example convention (e.g., 1 urban, 0 rural vicinity, NaN outside domain)."
         )
 
         # Optional metadata from class attributes (only if present and not None) for reproducibility
@@ -1003,12 +1122,13 @@ class UrbanRuralSelection:
             "crop_city_area_distance_from_city_polygon_km": "crop_distance_from_city_polygon_km",
             "rural_to_urban_ratio": "rural_to_urban_ratio",
             "rural_area_inside_city_polygon": "rural_area_inside_city_polygon",
-               }
+        }
         
         for out_key, src_attr in attrs_map.items():
             value = getattr(self, src_attr, None)
             if value is not None:
-                urmask.attrs[out_key] = value
+                urmask.attrs[out_key] = _to_netcdf_attr_value(value)
+
 
         # Variable-level metadata
         default_long_names = {
@@ -1017,7 +1137,16 @@ class UrbanRuralSelection:
             "orog_mask": "Orography mask: 1 indicates areas meeting orography criteria, 0 otherwise.",
         }
         if variable_long_names is not None:
+            if not isinstance(variable_long_names, dict):
+                raise ValueError("variable_long_names must be a dictionary mapping variable names to long_name strings.")
             default_long_names.update(variable_long_names)
+
+            # Optional warning for unknown keys passed by caller
+            unknown = set(variable_long_names.keys()) - set(urmask.data_vars.keys())
+            if unknown:
+                print(
+                    f"Warning: variable_long_names contains keys not present in dataset: {sorted(unknown)}"
+                )
 
         for var_name in urmask.data_vars:
             if var_name in default_long_names:
@@ -1025,8 +1154,7 @@ class UrbanRuralSelection:
 
         # Convert boolean attributes to strings for netCDF4 compatibility
         for attr_name in list(urmask.attrs.keys()):
-            if isinstance(urmask.attrs[attr_name], bool):
-                urmask.attrs[attr_name] = str(urmask.attrs[attr_name])
+                urmask.attrs[attr_name] = _to_netcdf_attr_value(urmask.attrs[attr_name])
 
         return urmask
 
@@ -1083,6 +1211,9 @@ class UrbanRuralSelection:
         import cartopy.crs as ccrs
         from matplotlib.colors import LinearSegmentedColormap, ListedColormap, BoundaryNorm
         plt.rcParams.update({'axes.titlesize': 16, 'axes.labelsize': 14, 'xtick.labelsize': 14, 'ytick.labelsize': 14})
+
+        # Standardize UF to [0, 1] and LF to [0, 100] before processing
+        ds_uf, ds_lf = self._standardize_fraction_inputs(ds_uf=ds_uf, ds_lf=ds_lf)
 
         # Define colormaps and normalization for urban fraction, land-sea fraction, and orography
         base_cmap = self._resolve_cmap(urban_cmap, matplotlib_mod=matplotlib, name_for_error="urban_cmap")
@@ -1200,8 +1331,8 @@ class UrbanRuralSelection:
                                         norm=norm_orog,
                                         transform=proj)
             fig.colorbar(im6, ax=axes[1, 2], shrink=0.8, label='Orography [m]')
-            elev_lim_min = self.urban_elev_min - self.orog_diff
-            elev_lim_max = self.urban_elev_max + self.orog_diff
+            elev_lim_min = self.urban_elev_min_threshold
+            elev_lim_max = self.urban_elev_max_threshold
             axes[1, 2].set_title(f'Urban-Rural Mask \n Orography Difference = {self.orog_diff}m \n{elev_lim_min:.0f}m < Orography < {elev_lim_max:.0f}m')
         elif ds_orog is not None and orog_mask is None:
             # Hide
