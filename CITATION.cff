@@ -1,6 +1,6 @@
-cff-version: 1.2.0
+cff-version: 1.2.1
 
-title: "urmask"
+title: "urmask: Urban and Rural Area Classification for High-Resolution Climate Model Data"
 
 message: "If you use this software, please cite it."
 
@@ -14,7 +14,7 @@ authors:
   - family-names: Rechid
     given-names: Diana
 
-version: 1.0.0
+version: 1.0.1
 
 date-released: 2026-07-13
 
