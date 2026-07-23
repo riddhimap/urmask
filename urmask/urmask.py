@@ -115,18 +115,29 @@ class UrbanRuralSelection:
             all_cities_gdf = all_cities_gdf.to_crs("EPSG:4326")  # ensure it's in geographic coordinates
             self.all_cities_gdf = all_cities_gdf # store the GeoDataFrame for future use
 
+            # Get all unique city names from the specified column in the GeoDataFrame
+            all_cities_names = (
+                all_cities_gdf[gdf_column_city_names]
+                .dropna()
+                .astype(str)
+                .unique()
+                .tolist()
+            )
+            if not all_cities_names:
+                raise ValueError(f"No valid city names found in column '{gdf_column_city_names}'.")
+
             # Do fuzzy matching to find city name in the GeoDataFrame
-            match, score, _ = process.extractOne(city_name, all_cities_gdf[gdf_column_city_names].unique())
+            match, score, _ = process.extractOne(city_name, all_cities_names)
             if score >= 80:  # threshold for fuzzy matching
                 print(f"{city_name} exists in column '{gdf_column_city_names}' as '{match}'.")
                 city_gdf = all_cities_gdf[(all_cities_gdf[gdf_column_city_names] == match)]
                 self.city_name = match  # update city_name to the matched name
                 if city_gdf.empty:
-                    raise LookupError(f"Warning: No city polygon found for {match} in column '{gdf_column_city_names}'.")
+                    raise LookupError(f"No city polygon found for {match} in column '{gdf_column_city_names}'.")
                 else:
                     self.city_polygon = city_gdf.geometry.union_all()  # merge all geometries if multiple entries exist
             else:
-                raise LookupError(f"Warning: City '{city_name}' not found in column '{gdf_column_city_names}'.")
+                raise LookupError(f"City '{city_name}' not found in column '{gdf_column_city_names}'.")
         else:
             raise TypeError("all_cities_gdf must be a GeoDataFrame.")
         
@@ -142,6 +153,14 @@ class UrbanRuralSelection:
         self.rural_th = rural_threshold
         self.landsea_th = landsea_threshold
         self.orog_diff = orography_diff
+
+        # initialize key variables for later use
+        self.neighbors_gdf = None
+        self.crop_distance_from_city_polygon_km = None
+        self.rural_to_urban_ratio = None
+        self.rural_area_inside_city_polygon = None
+        self.urban_elev_min_threshold = None
+        self.urban_elev_max_threshold = None
         self.thresholds = None
 
 
@@ -338,13 +357,20 @@ class UrbanRuralSelection:
         if thresholds_fraction is None:
             thresholds_fraction = self._get_dynamic_thresholds(ds_uf=ds_uf)
             print(f"Dynamic thresholds for {self.city_name}: {thresholds_fraction}")
+        else:
+            if np.any(np.diff(thresholds_fraction) < 0):
+                raise ValueError("thresholds_fraction must be sorted ascending.")
+            if thresholds_fraction[0] < 0 or thresholds_fraction[-1] > 1:
+                raise ValueError("thresholds_fraction must be within [0, 1].")
+
         self.thresholds = thresholds_fraction
 
         # Step 2: Compute masks for each urban fraction density level
         threshold_masks = self._compute_threshold_masks(
             ds_uf=ds_uf,
             thresholds_fraction=self.thresholds)
-        
+        if not threshold_masks:
+            raise ValueError("No threshold masks were generated. Check thresholds_fraction.")
 
         # Step 3: Label connected regions independently for each density level
         labels = [measure.label(mask, connectivity=1) for mask in threshold_masks] #If connectivity=None, a full connectivity of input.ndim is used.
@@ -367,6 +393,9 @@ class UrbanRuralSelection:
         landsea_mask = ds_lf > self.landsea_th   
         # Combine urban mask with land-sea masks
         urban_mask = urban_mask * landsea_mask
+
+        if int(urban_mask.sum().item()) == 0:
+            raise ValueError("Urban mask contains zero cells after land-sea filtering.")
 
         orog_mask = None
 
@@ -408,7 +437,7 @@ class UrbanRuralSelection:
     
     def create_rural_mask(self, *, 
                             ds_uf: xr.DataArray,
-                            urban_mask: xr.DataArray,
+                            urban_mask: xr.DataArray | xr.Dataset,
                             landsea_mask: xr.DataArray,
                             orog_mask: xr.DataArray | None = None,
                             rural_to_urban_ratio: float = 2.0,
@@ -423,7 +452,7 @@ class UrbanRuralSelection:
             ----------
             ds_uf : xarray DataArray
                 Dataset containing the urban fraction and latitude/longitude grids.
-            urban_mask : xarray DataArray
+            urban_mask : xarray DataArray or xarray Dataset
                 Boolean mask of the extracted urban footprint from urban fraction data.
             landsea_mask : xarray DataArray
                 Boolean mask with land area fraction threshold applied from land fraction data.
@@ -452,7 +481,8 @@ class UrbanRuralSelection:
             ds_uf, _ = self._standardize_fraction_inputs(ds_uf=ds_uf)
             
             # Define urban seed for rural growth
-            if urban_mask.isnull().any():
+            urban_mask = urban_mask['urban_mask'] if isinstance(urban_mask, xr.Dataset) else urban_mask
+            if bool(urban_mask.isnull().any().item()):
                 urban_mask = urban_mask.fillna(0)
                 print("Warning: Urban mask contains NaN values. Filling NaN with 0 for rural mask growth. Ensure that urban mask values are 1. Or else give urban_mask as boolean mask.")
             urban_bool = urban_mask.astype(bool)
@@ -1077,13 +1107,14 @@ class UrbanRuralSelection:
 
         # Helper: convert values to netCDF-safe attribute types
         def _to_netcdf_attr_value(value):
-            # Keep plain Python scalars
-            if isinstance(value, (str, int, float)):
-                return value
 
             # Convert bool to string for widest netCDF compatibility
             if isinstance(value, bool):
                 return str(value)
+            
+            # Keep plain Python scalars
+            if isinstance(value, (str, int, float)):
+                return value
 
             # numpy scalar -> Python scalar
             if isinstance(value, np.generic):
@@ -1166,7 +1197,7 @@ class UrbanRuralSelection:
                             ds_uf: xr.DataArray,
                             ds_lf: xr.DataArray,
                             ds_orog: xr.DataArray = None,
-                            urban_mask: xr.DataArray = None,
+                            urban_mask: xr.DataArray | xr.Dataset = None,
                             landsea_mask: xr.DataArray = None,
                             orog_mask: xr.DataArray = None,
                             neighbors = False,
@@ -1187,7 +1218,7 @@ class UrbanRuralSelection:
             Dataset containing the land-sea fraction and latitude/longitude grids.
         ds_orog : xarray.DataArray, optional
             Dataset containing the orography and latitude/longitude grids.
-        urban_mask : xarray.DataArray
+        urban_mask : xarray.DataArray or xarray.Dataset, optional
             Binary mask indicating urban/rural areas.
         landsea_mask : xarray.DataArray
             Binary mask indicating meeting land-sea areas criteria.
@@ -1300,6 +1331,7 @@ class UrbanRuralSelection:
 
         # Plot the urban mask, land-sea mask, and orography mask on the second row of subplots
         if urban_mask is not None:
+            urban_mask = urban_mask['urban_mask'] if isinstance(urban_mask, xr.Dataset) else urban_mask
             im4 = axes[1, 0].pcolormesh(ds_uf.lon, ds_uf.lat,
                                         ds_uf.where(urban_mask == 1, np.nan),
                                         cmap=cmap_uf,
@@ -1340,6 +1372,7 @@ class UrbanRuralSelection:
 
         # plot the urban and rural masks as polygons on top for better visualization
         if urban_mask is not None:
+            urban_mask = urban_mask['urban_mask'] if isinstance(urban_mask, xr.Dataset) else urban_mask
             from .utils import plot_urban_polygon
             for k in range(ncols):
                 plot_urban_polygon(urban_mask, axes[1, k])
