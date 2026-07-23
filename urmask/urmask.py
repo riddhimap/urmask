@@ -311,9 +311,7 @@ class UrbanRuralSelection:
                                ds_orog: xr.DataArray | None = None, # required for creating rural mask
                                thresholds_fraction: list[float] = None, # low to high tiers
                                debug_select_labels: bool = False,
-                               orog_method_1: bool = True,
-                               orog_method_2: bool = False,
-                               ) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray | None, list[np.ndarray], list[np.ndarray]]:
+                               ) -> tuple[xr.Dataset, xr.DataArray, xr.DataArray | None, list[np.ndarray], list[np.ndarray]]:
         
         """
         Get city urban fraction, land fraction, and orography (optional) mask.
