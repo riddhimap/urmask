@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "urmask"
+version = "1.0.1"
+description = "Urban and Rural Area Classification for High-Resolution Climate Model Data"
+readme = "README.md"
+requires-python = ">=3.10"
+
+authors = [ 
+        {name = "Riddhima Puri"},
+        {name = "Claas Teichmann"},
+        {name = "Diana Rechid"}
+]
+
+license = { file = "LICENSE" }
+
+dependencies = [
+    "numpy",
+    "xarray",
+    "geopandas",
+    "pandas",
+    "matplotlib",
+    "shapely",
+    "scikit-image",
+    "rapidfuzz"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
