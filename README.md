@@ -43,14 +43,50 @@ Contains the UrbanRuralSelection class, which provides functionality to:
 
 Utility functions supporting data preprocessing, spatial operations, and visualization.
 
-### **urmask/environment.txt**
+### **environment.txt**
 
-Lists the main Python package dependencies and version requirements needed to reproduce the computational environment used by this repository.
+Lists the main Python package dependencies and version requirements used to reproduce the computational environment in which urmask was developed and tested.
 
 Install all dependencies using:
 
 pip install -r environment.txt
 
+
+## Installation
+
+**Option 1: Install directly from Github**
+```
+pip install git+https://github.com/riddhimap/urmask.git
+```
+
+**Option 2: Development installation**
+
+Clone the repository
+```
+git clone https://github.com/riddhimap/urmask.git
+cd urmask
+```
+Create a virtual environment
+```
+python -m venv urmask-env
+```
+Activate the environment
+```
+source urmask-env/bin/activate # Linux/macOS
+# or
+urmask-env\Scripts\activate # Windows
+```
+Optional: Install dependencies used in the tested version
+```
+pip install -r environment.txt
+```
+Install urmask
+```
+pip install -e .
+```
+
+Then in Python
+```import urmask```
 
 ## Required Input Data
 To generate urban and rural masks, urmask requires the following input datasets:
